@@ -238,7 +238,7 @@ function confirmationHTML(final = false) {
       <div class="summary-item wide"><small>Enquiry</small><b>${escapeHTML(flows[d.purpose].label)} — ${escapeHTML(d.purposeDetail)}</b></div>
       <div class="summary-item"><small>Date</small><b>${escapeHTML(dateLabel(d.date))}</b></div>
       <div class="summary-item"><small>Time</small><b>${escapeHTML(d.time)}</b></div>
-    </div>${final ? '<div class="summary-actions"><button type="button" data-action="calendar">Add to calendar</button><button type="button" data-action="transcript">Download transcript</button></div>' : ''}`;
+    </div>${final ? '<div class="summary-actions"><button type="button" data-action="calendar">Open Google Calendar</button><button type="button" data-action="transcript">Download transcript</button></div>' : ''}`;
 }
 
 function showConfirmation() {
@@ -293,21 +293,32 @@ function downloadTranscript() {
 }
 
 function addToCalendar() {
-  const { date, time, purposeDetail, name, email, phone } = state.data;
+  const { date, time, purposeDetail, name, email, phone, followUp } = state.data;
   const [, hourRaw, minuteRaw, meridiem] = time.match(/(\d+):(\d+)\s(AM|PM)/);
-  let hour = Number(hourRaw) % 12 + (meridiem === 'PM' ? 12 : 0);
+  const hour = Number(hourRaw) % 12 + (meridiem === 'PM' ? 12 : 0);
   const start = new Date(`${date}T${String(hour).padStart(2,'0')}:${minuteRaw}:00`);
   const end = new Date(start.getTime() + 30 * 60 * 1000);
-  const stamp = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-  const clean = text => text.replace(/[\\,;]/g, m => `\\${m}`).replace(/\n/g, '\\n');
-  const ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Aura Assist//Appointment//EN\r\nBEGIN:VEVENT\r\nUID:${Date.now()}@aura-assist\r\nDTSTAMP:${stamp(new Date())}\r\nDTSTART:${stamp(start)}\r\nDTEND:${stamp(end)}\r\nSUMMARY:Aura Assist consultation\r\nDESCRIPTION:${clean(`${purposeDetail}\nCustomer: ${name}\nEmail: ${email}\nPhone: ${phone}`)}\r\nSTATUS:TENTATIVE\r\nEND:VEVENT\r\nEND:VCALENDAR`;
-  const blob = new Blob([ics], { type: 'text/calendar' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = 'aura-assist-appointment.ics';
-  link.click();
-  URL.revokeObjectURL(link.href);
-  showToast('Calendar invite downloaded');
+  const stamp = value => value.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const details = [
+    purposeDetail,
+    '',
+    `Customer: ${name}`,
+    `Registered email: ${email}`,
+    `Phone: ${phone}`,
+    followUp ? `Consultation preference: ${followUp}` : ''
+  ].filter(Boolean).join('\n');
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: 'Aura Assist consultation',
+    dates: `${stamp(start)}/${stamp(end)}`,
+    details,
+    add: email
+  });
+  const calendarUrl = `https://calendar.google.com/calendar/render?${params}`;
+  const calendarWindow = window.open(calendarUrl, '_blank');
+  if (calendarWindow) calendarWindow.opener = null;
+  else window.location.href = calendarUrl;
+  showToast(`Opening Google Calendar for ${email}`);
 }
 
 form.addEventListener('submit', event => { event.preventDefault(); handleInput(input.value); });
