@@ -2,6 +2,12 @@
 
 A polished conversational bot prototype built for an AI Engineer technical assessment. It handles inbound enquiries, collects and validates customer details, asks context-aware follow-up questions, schedules an appointment, and produces a final confirmation.
 
+## Live demo
+
+**[Open Aura Assist on Render](https://aura-assist.onrender.com)**
+
+Hosted as a public static site on Render with automatic deployments from the `main` branch.
+
 ## Features
 
 - Friendly welcome and guided quick replies
