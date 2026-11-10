@@ -127,7 +127,7 @@ function handleInput(raw) {
   switch (state.step) {
     case 'purpose': {
       const purpose = identifyPurpose(value);
-      if (!purpose) return invalid('I’m not quite sure which team you need. Please choose an option below, or describe your enquiry in a little more detail.', { replies: purposeReplies() });
+      if (!purpose) return invalid('I’m not quite sure which team you need. Please choose an option below, or describe your enquiry in a little more detail.', purposeReplies());
       state.data.purpose = purpose;
       state.data.purposeDetail = purpose === 'other' && !['other', 'general enquiry'].includes(value.toLowerCase()) ? value : '';
       state.step = state.data.purposeDetail ? 'name' : 'purposeDetail';
